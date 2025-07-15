@@ -10,3 +10,10 @@ class my_one:
 
 myObj = my_one()     #create object
 myObj.firstName()
+
+
+"""
+output:
+My First Name Sachini
+My Last Name Dhananjana
+"""
