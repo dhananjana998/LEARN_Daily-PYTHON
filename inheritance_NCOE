@@ -97,4 +97,33 @@ for member in members:
     member.display()
 
 
+""" output:
+Member No: 1
+Type (teachertrainers/lecturer/academicstaff): teachertrainers
+Enter Your Name: dhananjana
+Enter Your Age: 23
+Enter Your Phone Number: 0775822669
+Enter Your Gender: Female
+Teacher Trainers ID: s2514
+
+Member No: 2
+Type (teachertrainers/lecturer/academicstaff): lecturer
+Enter Your Name: Dissanayake
+Enter Your Age: 45
+Enter Your Phone Number: 0785678934
+Enter Your Gender: Male
+Lecturer ID: L001
+Subject: Sociology
+
+Member No: 3
+Type (teachertrainers/lecturer/academicstaff): academicstaff
+Enter Your Name: kamal
+Enter Your Age: 34
+Enter Your Phone Number: 0765678903
+Enter Your Gender: Male
+AcademicStaff ID: A004
+Work Hours: 6
+"""
+
+
    
