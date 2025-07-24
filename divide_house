@@ -1,0 +1,18 @@
+
+ad_num = 1
+
+
+tot_num = int(input("Enter total number of students: "))
+
+
+while ad_num <= tot_num:
+
+    if ad_num % 4 == 0:
+        print("house four")
+    elif ad_num % 4 == 1:
+        print("house one")
+    elif ad_num % 4 == 2:
+        print("housetwo")
+    elif ad_num % 4 == 3:
+        print("house three")
+    ad_num += 1  
