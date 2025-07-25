@@ -1,0 +1,11 @@
+priority_oder={"HIGH" :1,"MEDIUM":2,"LOW":3}
+ToDo_List ={}
+#user 
+def Display_Menu():
+  print ("\n--------------TO-DO LIST MENU---------------)
+  print("01.Add Task")
+  print("02.view All Task")
+  print("03.View pending Task")
+  print("04.Update task ")
+  print("05.Delete Task")
+  print("06.exit")
