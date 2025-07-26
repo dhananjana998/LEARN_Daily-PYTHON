@@ -1,100 +1,190 @@
-priority_oder={"HIGH" :1,"MEDIUM":2,"LOW":3}
-ToDo_List ={}
-#user interface
+priority_order = {"High": 1, "Medium": 2, "Low": 3}
+ToDo_List = {}
+
+# user interface
 def Display_Menu():
-  print ("\n--------------TO-DO LIST MENU---------------)
-  print("01.Add Task")
-  print("02.view All Task")
-  print("03.View pending Task")
-  print("04.Update task ")
-  print("05.Delete Task")
-  print("06.exit")
+    print("\n-------------- TO-DO LIST MENU ---------------")
+    print("01. Add Task")
+    print("02. View All Tasks")
+    print("03. View Pending Tasks")
+    print("04. Update Task")
+    print("05. Delete Task")
+    print("06. Exit")
 
-#Add task for the to do list 
+# Add task to the to-do list
 def add_task():
-    Task_Name=input("Enter task name")
-    Status = input("Enter Status (done/not done):").strip().lower()
-    Due_Date = input("Enter due date (YYYY-MM-DD): ")
-    Priority = input("Enter priority (High/Medium/Low:").capitalize()
+    task_name = input("Enter task name: ")
+    status = input("Enter status (done/not done): ").strip().lower()
+    due_date = input("Enter due date (YYYY-MM-DD): ")
+    priority = input("Enter priority (High/Medium/Low): ").capitalize()
 
-   ToDo_List[task_name]={
-       "Status":Status,
-       "Due_Dates":Due_Date,
-      "priority":Priority}
-   print("Task add successfully!")
+    ToDo_List[task_name] = {
+        "Status": status,
+        "Due_Date": due_date,
+        "Priority": priority
+    }
+    print("Task added successfully!")
 
-#View all tasks
+# View all tasks
 def view_all_tasks():
-   if not ToDo_List:
-    print("No tasks found.")
-    return
-   print("\n ------------- ALL Tasks -------------")
+    if not ToDo_List:
+        print("No tasks found.")
+        return
+    print("\n------------- ALL TASKS -------------")
+    for task, details in ToDo_List.items():
+        print(f"\nTask: {task}")
+        print(f"Status: {details['Status']}")
+        print(f"Due Date: {details['Due_Date']}")
+        print(f"Priority: {details['Priority']}")
 
-   for task,details in ToDo_List.items():
-    print(f"Task : {task} \n Status:{details['Status']}  \n Due-Date: {details['Due_Date']} \n Priority: {details['Priority']}")
-
-
-#View pending task
+# View only pending tasks sorted by priority
 def view_pending_task():
-   pending_tasks = {
-      task:details for task,details in ToDo_List.items() if details["Status"]=="not done"
- 
-   if not pending_tasks:
-       print("No pending tasks found.")
-       return
+    pending_tasks = {
+        task: details for task, details in ToDo_List.items() if details["Status"] == "not done"
+    }
 
-   sorted_task=sorted(pending_tasks.items(), key=lambda x: priority_order.get(x[1]["priority"],4))
+    if not pending_tasks:
+        print("No pending tasks found.")
+        return
 
-   print("\n ------------- Pending Task -------------")
-   for task,details in sorted_task :
-       print(f"Task : {task} \n Status:{details['Status']}  \n Due-Date: {details['Due_Date']} \n Priority: {details['Priority']}")
-#update the task status
+    sorted_tasks = sorted(pending_tasks.items(), key=lambda x: priority_order.get(x[1]["Priority"], 4))
+
+    print("\n------------- PENDING TASKS -------------")
+    for task, details in sorted_tasks:
+        print(f"\nTask: {task}")
+        print(f"Status: {details['Status']}")
+        print(f"Due Date: {details['Due_Date']}")
+        print(f"Priority: {details['Priority']}")
+
+# Update the task status
 def update_task_status():
-      Task_Name = input("Enter task name  to update:")
-      if Task_Name in ToDo_List:
-           new_status = input("Enter new status (done/not done): ").strip().lower()
-           ToDo_List[Task_Name]["Status"]=new_status 
-           print("Status Updated.")
-      else:
-            print("Status not Updated.")
+    task_name = input("Enter task name to update: ")
+    if task_name in ToDo_List:
+        new_status = input("Enter new status (done/not done): ").strip().lower()
+        ToDo_List[task_name]["Status"] = new_status
+        print("Status updated.")
+    else:
+        print("Task not found.")
 
-    
-#delete task
+# Delete task
 def delete_task():
-     Task_Name = input("Enter task name to delete:")
-     if task_name in ToDo_List:
-        del ToDo_List[Task_Name ]
-        print("Task deleted successfully")
-     else:
-       print("Task not found")
+    task_name = input("Enter task name to delete: ")
+    if task_name in ToDo_List:
+        del ToDo_List[task_name]
+        print("Task deleted successfully.")
+    else:
+        print("Task not found.")
 
-
-#main programme
+# Main program loop
 while True:
-   Display_Menu()
-   choice = input ("Enter Your Choice (01-06)
+    Display_Menu()
+    choice = input("Enter your choice (01-06): ").strip()
 
+    if choice == "01":
+        add_task()
+    elif choice == "02":
+        view_all_tasks()
+    elif choice == "03":
+        view_pending_task()
+    elif choice == "04":
+        update_task_status()
+    elif choice == "05":
+        delete_task()
+    elif choice == "06":
+        print("Exiting To-Do List.")
+        break
+    else:
+        print("Invalid choice. Please enter a number between 01-06.")
 
-  if choice =="01":
-     add_task()
-  elif choice =="02":
-    view_all_tasks():
-  elif choice =="03":
-   view_pending_task()
-  elif choice =="04":
-    update_task_status()
- elif choice =="05":
-    delete_task()
- elif choice =="06":
-    print("Exiting To-DO List.")
-    break
-else:
-    print("Invalid choice. Please enter 01-06.")
+'''-------------- TO-DO LIST MENU ---------------
+01. Add Task
+02. View All Tasks
+03. View Pending Tasks
+04. Update Task
+05. Delete Task
+06. Exit
+Enter your choice (01-06): 01
+Enter task name: Read novel
+Enter status (done/not done): not done
+Enter due date (YYYY-MM-DD): 2025-07-26
+Enter priority (High/Medium/Low): 2
+Task added successfully!
 
+-------------- TO-DO LIST MENU ---------------
+01. Add Task
+02. View All Tasks
+03. View Pending Tasks
+04. Update Task
+05. Delete Task
+06. Exit
+Enter your choice (01-06): 02
 
+------------- ALL TASKS -------------
 
+Task: Read novel
+Status: not done
+Due Date: 2025-07-26
+Priority: 2
 
+-------------- TO-DO LIST MENU ---------------
+01. Add Task
+02. View All Tasks
+03. View Pending Tasks
+04. Update Task
+05. Delete Task
+06. Exit
+Enter your choice (01-06): 03
 
+------------- PENDING TASKS -------------
 
+Task: Read novel
+Status: not done
+Due Date: 2025-07-26
+Priority: 2
 
+-------------- TO-DO LIST MENU ---------------
+01. Add Task
+02. View All Tasks
+03. View Pending Tasks
+04. Update Task
+05. Delete Task
+06. Exit
+Enter your choice (01-06): 04
+Enter task name to update: read novel
+Task not found.
 
+-------------- TO-DO LIST MENU ---------------
+01. Add Task
+02. View All Tasks
+03. View Pending Tasks
+04. Update Task
+05. Delete Task
+06. Exit
+Enter your choice (01-06): 04
+Enter task name to update: Read novel
+Enter new status (done/not done): done
+Status updated.
+
+-------------- TO-DO LIST MENU ---------------
+01. Add Task
+02. View All Tasks
+03. View Pending Tasks
+04. Update Task
+05. Delete Task
+06. Exit
+Enter your choice (01-06): 05
+Enter task name to delete: Read novel
+Task deleted successfully.
+
+-------------- TO-DO LIST MENU ---------------
+01. Add Task
+02. View All Tasks
+03. View Pending Tasks
+04. Update Task
+05. Delete Task
+06. Exit
+Enter your choice (01-06): 06
+Exiting To-Do List.
+
+Process finished with exit code 0
+'''
