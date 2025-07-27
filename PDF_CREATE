@@ -1,0 +1,176 @@
+import os
+import tkinter as tk
+from tkinter import messagebox, scrolledtext
+from PyPDF2 import PdfReader
+from fpdf import FPDF
+import tempfile
+import shutil
+
+# Folder path where PDFs are stored
+folder_path = os.path.expanduser("~/Documents/Sample")
+pdf_files = []
+
+# Path to your DejaVuSans.ttf font file (must exist)
+FONT_PATH = "DejaVuSans.ttf"  # Put font file in same folder as script or use full path
+
+def load_pdfs():
+    pdf_files.clear()
+    listbox.delete(0, tk.END)
+    if not os.path.exists(folder_path):
+        messagebox.showerror("Error", f"Folder not found:\n{folder_path}")
+        return
+    for file in os.listdir(folder_path):
+        if file.lower().endswith(".pdf"):
+            full_path = os.path.join(folder_path, file)
+            name = os.path.splitext(file)[0]
+            pdf_files.append((name, full_path))
+            listbox.insert(tk.END, name)
+    if not pdf_files:
+        messagebox.showinfo("No PDFs", "No PDF files found in the folder.")
+
+def create_pdf():
+    def save_new_pdf():
+        content = editor.get("1.0", tk.END).strip()
+        filename = entry_name.get().strip()
+        if not filename or not content:
+            messagebox.showwarning("Missing", "Enter both file name and content.")
+            return
+        save_path = os.path.join(folder_path, filename + ".pdf")
+        try:
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.add_font('DejaVu', '', FONT_PATH)
+            pdf.set_font('DejaVu', '', 12)
+            pdf.multi_cell(0, 10, content)
+            pdf.output(save_path)
+            messagebox.showinfo("Success", f"{filename}.pdf created.")
+            win.destroy()
+            load_pdfs()
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not create PDF:\n{e}")
+
+    win = tk.Toplevel(root, bg="black")
+    win.title("Create PDF")
+    win.geometry("600x500")
+
+    tk.Label(win, text="File Name:", font=("Helvetica", 12), fg="yellow", bg="black").pack(pady=5)
+    entry_name = tk.Entry(win, font=("Helvetica", 12), width=40, bg="gray20", fg="white")
+    entry_name.pack(pady=5)
+
+    editor = scrolledtext.ScrolledText(win, wrap=tk.WORD, width=70, height=20,
+                                       font=("Helvetica", 11), bg="black", fg="white", insertbackground="white")
+    editor.pack(pady=10)
+
+    tk.Button(win, text="Save", bg="red", fg="white", font=("Helvetica", 12, "bold"), command=save_new_pdf).pack(pady=10)
+
+def open_pdf():
+    selected = listbox.curselection()
+    if not selected:
+        return
+    index = selected[0]
+    name, path = pdf_files[index]
+    try:
+        reader = PdfReader(path)
+        text_output = ""
+        for page in reader.pages:
+            text_output += page.extract_text() or ""
+        win = tk.Toplevel(root, bg="black")
+        win.title(f"Read PDF - {name}")
+        win.geometry("600x500")
+
+        viewer = scrolledtext.ScrolledText(win, wrap=tk.WORD, width=70, height=25,
+                                           font=("Helvetica", 11), bg="black", fg="white", insertbackground="white")
+        viewer.insert(tk.END, text_output)
+        viewer.config(state=tk.DISABLED)
+        viewer.pack(pady=10)
+    except Exception as e:
+        messagebox.showerror("Error", f"Could not read PDF:\n{e}")
+
+def update_pdf():
+    selected = listbox.curselection()
+    if not selected:
+        return
+    index = selected[0]
+    name, path = pdf_files[index]
+    try:
+        reader = PdfReader(path)
+        text_output = ""
+        for page in reader.pages:
+            text_output += page.extract_text() or ""
+    except Exception as e:
+        messagebox.showerror("Error", f"Could not read PDF:\n{e}")
+        return
+
+    def save_updated_pdf():
+        content = editor.get("1.0", tk.END).strip()
+        if not content:
+            messagebox.showwarning("Empty", "Please enter some content.")
+            return
+        try:
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.add_font('DejaVu', '', FONT_PATH)
+            pdf.set_font('DejaVu', '', 12)
+            pdf.multi_cell(0, 10, content)
+
+            # Save to temp file first, then overwrite original to avoid file lock issues
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+                temp_path = tmp_file.name
+            pdf.output(temp_path)
+            shutil.move(temp_path, path)
+
+            messagebox.showinfo("Success", f"{name}.pdf updated.")
+            win.destroy()
+            load_pdfs()
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not update PDF:\n{e}")
+
+    win = tk.Toplevel(root, bg="black")
+    win.title(f"Update PDF - {name}")
+    win.geometry("600x500")
+
+    editor = scrolledtext.ScrolledText(win, wrap=tk.WORD, width=70, height=20,
+                                       font=("Helvetica", 11), bg="black", fg="white", insertbackground="white")
+    editor.insert(tk.END, text_output)
+    editor.pack(pady=10)
+
+    tk.Button(win, text="Save", bg="red", fg="white", font=("Helvetica", 12, "bold"), command=save_updated_pdf).pack(pady=10)
+
+def delete_pdf():
+    selected = listbox.curselection()
+    if not selected:
+        return
+    index = selected[0]
+    name, path = pdf_files[index]
+    confirm = messagebox.askyesno("Delete", f"Are you sure to delete {name}?")
+    if confirm:
+        try:
+            os.remove(path)
+            messagebox.showinfo("Deleted", f"{name}.pdf deleted.")
+            load_pdfs()
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not delete PDF:\n{e}")
+
+root = tk.Tk()
+root.title("PDF Manager - CRUD Interface")
+root.geometry("1000x650")
+root.configure(bg="black")
+
+tk.Label(root, text="PDF Manager", font=("Helvetica", 16, "bold"), fg="yellow", bg="black").pack(pady=10)
+
+button_frame = tk.Frame(root, bg="black")
+button_frame.pack(pady=10)
+
+tk.Button(button_frame, text="Create", bg="green", fg="white", font=("Helvetica", 12), width=12, command=create_pdf).pack(side=tk.LEFT, padx=10)
+tk.Button(button_frame, text="Read", bg="blue", fg="white", font=("Helvetica", 12), width=12, command=open_pdf).pack(side=tk.LEFT, padx=10)
+tk.Button(button_frame, text="Update", bg="orange", fg="white", font=("Helvetica", 12), width=12, command=update_pdf).pack(side=tk.LEFT, padx=10)
+tk.Button(button_frame, text="Delete", bg="red", fg="white", font=("Helvetica", 12), width=12, command=delete_pdf).pack(side=tk.LEFT, padx=10)
+
+listbox = tk.Listbox(root, width=60, height=18, font=("Helvetica", 12), bg="black", fg="yellow", selectbackground="gray30")
+listbox.pack(pady=10)
+listbox.bind("<Double-Button-1>", lambda e: open_pdf())
+
+tk.Button(root, text="Load PDFs", font=("Helvetica", 12), bg="gray20", fg="white", command=load_pdfs).pack(pady=10)
+
+load_pdfs()
+root.mainloop()
