@@ -5,49 +5,85 @@ from PyPDF2 import PdfReader
 from fpdf import FPDF
 import tempfile
 import shutil
+import re
 
 # Folder path where PDFs are stored
 folder_path = os.path.expanduser("~/Documents/Sample")
 pdf_files = []
 
-# Path to your DejaVuSans.ttf font file (must exist)
-FONT_PATH = "DejaVuSans.ttf"  # Put font file in same folder as script or use full path
+# Path to DejaVuSans.ttf font file (adjust as needed)
+FONT_PATH = r"C:\Users\User\Desktop\SE_Skill\py\dejavu-fonts-ttf-2.37\ttf\DejaVuSans.ttf"  # Ensure correct path
+
+def ensure_directory_exists():
+    """Create the folder_path directory if it doesn't exist."""
+    if not os.path.exists(folder_path):
+        try:
+            os.makedirs(folder_path)
+        except OSError as e:
+            messagebox.showerror("Error", f"Failed to create directory {folder_path}:\n{str(e)}")
+            return False
+    return True
+
+def validate_filename(filename):
+    """Check if the filename is valid."""
+    if not filename:
+        return False, "Filename cannot be empty."
+    if not re.match(r'^[a-zA-Z0-9][a-zA-Z0-9_\-\. ]*$', filename):
+        return False, "Filename contains invalid characters."
+    return True, ""
+
+def create_pdf_file(content, save_path):
+    """Create a PDF file with the given content and save it to save_path."""
+    try:
+        if not os.path.exists(FONT_PATH):
+            raise FileNotFoundError(f"Font file not found: {FONT_PATH}")
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.add_font('DejaVu', '', FONT_PATH)
+        pdf.set_font('DejaVu', '', 12)
+        pdf.multi_cell(0, 10, content)
+        pdf.output(save_path)
+        return True, ""
+    except (FileNotFoundError, PermissionError, Exception) as e:
+        return False, f"Could not create PDF:\n{str(e)}"
 
 def load_pdfs():
+    """Load PDF files from the folder into the listbox."""
     pdf_files.clear()
     listbox.delete(0, tk.END)
-    if not os.path.exists(folder_path):
-        messagebox.showerror("Error", f"Folder not found:\n{folder_path}")
+    if not ensure_directory_exists():
         return
-    for file in os.listdir(folder_path):
-        if file.lower().endswith(".pdf"):
-            full_path = os.path.join(folder_path, file)
-            name = os.path.splitext(file)[0]
-            pdf_files.append((name, full_path))
-            listbox.insert(tk.END, name)
-    if not pdf_files:
-        messagebox.showinfo("No PDFs", "No PDF files found in the folder.")
+    try:
+        for file in os.listdir(folder_path):
+            if file.lower().endswith(".pdf"):
+                full_path = os.path.join(folder_path, file)
+                name = os.path.splitext(file)[0]
+                pdf_files.append((name, full_path))
+                listbox.insert(tk.END, name)
+        if not pdf_files:
+            messagebox.showinfo("No PDFs", "No PDF files found in the folder.")
+    except PermissionError:
+        messagebox.showerror("Error", f"Permission denied accessing folder:\n{folder_path}")
+    except OSError as e:
+        messagebox.showerror("Error", f"Error accessing folder:\n{str(e)}")
 
 def create_pdf():
+    """Open a window to create a new PDF."""
     def save_new_pdf():
         content = editor.get("1.0", tk.END).strip()
         filename = entry_name.get().strip()
-        if not filename or not content:
-            messagebox.showwarning("Missing", "Enter both file name and content.")
+        is_valid, error_msg = validate_filename(filename)
+        if not is_valid or not content:
+            messagebox.showwarning("Missing", error_msg or "Enter both file name and content.")
             return
         save_path = os.path.join(folder_path, filename + ".pdf")
-        try:
-            pdf = FPDF()
-            pdf.add_page()
-            pdf.add_font('DejaVu', '', FONT_PATH)
-            pdf.set_font('DejaVu', '', 12)
-            pdf.multi_cell(0, 10, content)
-            pdf.output(save_path)
+        success, error = create_pdf_file(content, save_path)
+        if success:
             messagebox.showinfo("Success", f"{filename}.pdf created.")
             win.destroy()
             load_pdfs()
-        except Exception as e:
-            messagebox.showerror("Error", f"Could not create PDF:\n{e}")
+        else:
+            messagebox.showerror("Error", error)
 
     win = tk.Toplevel(root, bg="black")
     win.title("Create PDF")
@@ -58,14 +94,16 @@ def create_pdf():
     entry_name.pack(pady=5)
 
     editor = scrolledtext.ScrolledText(win, wrap=tk.WORD, width=70, height=20,
-                                       font=("Helvetica", 11), bg="black", fg="white", insertbackground="white")
+                                      font=("Helvetica", 11), bg="black", fg="white", insertbackground="white")
     editor.pack(pady=10)
 
     tk.Button(win, text="Save", bg="red", fg="white", font=("Helvetica", 12, "bold"), command=save_new_pdf).pack(pady=10)
 
 def open_pdf():
+    """Open and display the content of a selected PDF."""
     selected = listbox.curselection()
     if not selected:
+        messagebox.showwarning("Selection", "Please select a PDF to read.")
         return
     index = selected[0]
     name, path = pdf_files[index]
@@ -73,22 +111,28 @@ def open_pdf():
         reader = PdfReader(path)
         text_output = ""
         for page in reader.pages:
-            text_output += page.extract_text() or ""
+            text = page.extract_text()
+            if text:
+                text_output += text
         win = tk.Toplevel(root, bg="black")
         win.title(f"Read PDF - {name}")
         win.geometry("600x500")
 
         viewer = scrolledtext.ScrolledText(win, wrap=tk.WORD, width=70, height=25,
-                                           font=("Helvetica", 11), bg="black", fg="white", insertbackground="white")
-        viewer.insert(tk.END, text_output)
+                                          font=("Helvetica", 11), bg="black", fg="white", insertbackground="white")
+        viewer.insert(tk.END, text_output or "No readable text found in the PDF.")
         viewer.config(state=tk.DISABLED)
         viewer.pack(pady=10)
-    except Exception as e:
-        messagebox.showerror("Error", f"Could not read PDF:\n{e}")
+    except PyPDF2.errors.PdfReadError:
+        messagebox.showerror("Error", f"Could not read PDF: Corrupted or invalid PDF file.")
+    except (FileNotFoundError, PermissionError) as e:
+        messagebox.showerror("Error", f"Could not access PDF:\n{str(e)}")
 
 def update_pdf():
+    """Open a window to update the content of a selected PDF."""
     selected = listbox.curselection()
     if not selected:
+        messagebox.showwarning("Selection", "Please select a PDF to update.")
         return
     index = selected[0]
     name, path = pdf_files[index]
@@ -96,9 +140,14 @@ def update_pdf():
         reader = PdfReader(path)
         text_output = ""
         for page in reader.pages:
-            text_output += page.extract_text() or ""
-    except Exception as e:
-        messagebox.showerror("Error", f"Could not read PDF:\n{e}")
+            text = page.extract_text()
+            if text:
+                text_output += text
+    except PyPDF2.errors.PdfReadError:
+        messagebox.showerror("Error", f"Could not read PDF: Corrupted or invalid PDF file.")
+        return
+    except (FileNotFoundError, PermissionError) as e:
+        messagebox.showerror("Error", f"Could not access PDF:\n{str(e)}")
         return
 
     def save_updated_pdf():
@@ -106,39 +155,42 @@ def update_pdf():
         if not content:
             messagebox.showwarning("Empty", "Please enter some content.")
             return
+        temp_path = None
         try:
-            pdf = FPDF()
-            pdf.add_page()
-            pdf.add_font('DejaVu', '', FONT_PATH)
-            pdf.set_font('DejaVu', '', 12)
-            pdf.multi_cell(0, 10, content)
-
-            # Save to temp file first, then overwrite original to avoid file lock issues
             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
                 temp_path = tmp_file.name
-            pdf.output(temp_path)
-            shutil.move(temp_path, path)
-
-            messagebox.showinfo("Success", f"{name}.pdf updated.")
-            win.destroy()
-            load_pdfs()
-        except Exception as e:
-            messagebox.showerror("Error", f"Could not update PDF:\n{e}")
+                success, error = create_pdf_file(content, temp_path)
+                if not success:
+                    raise Exception(error)
+                os.replace(temp_path, path)
+                messagebox.showinfo("Success", f"{name}.pdf updated.")
+                win.destroy()
+                load_pdfs()
+        except (FileNotFoundError, PermissionError, OSError) as e:
+            messagebox.showerror("Error", f"Could not update PDF:\n{str(e)}")
+        finally:
+            if temp_path and os.path.exists(temp_path):
+                try:
+                    os.remove(temp_path)
+                except:
+                    pass
 
     win = tk.Toplevel(root, bg="black")
     win.title(f"Update PDF - {name}")
     win.geometry("600x500")
 
     editor = scrolledtext.ScrolledText(win, wrap=tk.WORD, width=70, height=20,
-                                       font=("Helvetica", 11), bg="black", fg="white", insertbackground="white")
-    editor.insert(tk.END, text_output)
+                                      font=("Helvetica", 11), bg="black", fg="white", insertbackground="white")
+    editor.insert(tk.END, text_output or "No readable text found in the PDF.")
     editor.pack(pady=10)
 
     tk.Button(win, text="Save", bg="red", fg="white", font=("Helvetica", 12, "bold"), command=save_updated_pdf).pack(pady=10)
 
 def delete_pdf():
+    """Delete a selected PDF after confirmation."""
     selected = listbox.curselection()
     if not selected:
+        messagebox.showwarning("Selection", "Please select a PDF to delete.")
         return
     index = selected[0]
     name, path = pdf_files[index]
@@ -148,9 +200,10 @@ def delete_pdf():
             os.remove(path)
             messagebox.showinfo("Deleted", f"{name}.pdf deleted.")
             load_pdfs()
-        except Exception as e:
-            messagebox.showerror("Error", f"Could not delete PDF:\n{e}")
+        except (FileNotFoundError, PermissionError) as e:
+            messagebox.showerror("Error", f"Could not delete PDF:\n{str(e)}")
 
+# Initialize Tkinter window
 root = tk.Tk()
 root.title("PDF Manager - CRUD Interface")
 root.geometry("1000x650")
@@ -168,7 +221,7 @@ tk.Button(button_frame, text="Delete", bg="red", fg="white", font=("Helvetica", 
 
 listbox = tk.Listbox(root, width=60, height=18, font=("Helvetica", 12), bg="black", fg="yellow", selectbackground="gray30")
 listbox.pack(pady=10)
-listbox.bind("<Double-Button-1>", lambda e: open_pdf())
+listbox.bind("<Double-Button-1>", lambda event: open_pdf())
 
 tk.Button(root, text="Load PDFs", font=("Helvetica", 12), bg="gray20", fg="white", command=load_pdfs).pack(pady=10)
 
