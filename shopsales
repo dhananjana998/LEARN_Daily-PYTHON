@@ -1,15 +1,15 @@
 import numpy as np
 
-
+def shopsale():
     # shop items
     items = ["Bread", "Pizza", "Cake", "Burger"]
     # item price
     prices = np.array([160, 1250, 500, 750])
     sales = []
 
-    for d in range(1, 8):
+    for d in range(1, 2):
         print(f"Day {d}:")
-        day_sales = [int(input(f"   {item}: ")) for item in items]
+        day_sales = [int(input(f"{item}: ")) for item in items]
         sales.append(day_sales)
 
     sales = np.array(sales)
@@ -18,9 +18,22 @@ import numpy as np
     total_item = np.sum(sales, axis=0)
     total_per_item_cost = total_item * prices
 
+    # Convert NumPy int64 to Python int for cleaner output
+    total_item = total_item.tolist()
+    total_per_item_cost = total_per_item_cost.tolist()
+
     print("\n------------------------ Shop Summary ------------------------")
     print("Total sold per item:", dict(zip(items, total_item)))
     print("Total per items cost:", dict(zip(items, total_per_item_cost)))
 
+if __name__ == "__main__":
+    shopsale()
+    
+""" output:
+
+------------------------ Shop Summary ------------------------
+Total sold per item: {'Bread': 5, 'Pizza': 7, 'Cake': 8, 'Burger': 9}
+Total per items cost: {'Bread': 800, 'Pizza': 8750, 'Cake': 4000, 'Burger': 6750}
 
 
+"""
