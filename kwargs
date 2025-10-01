@@ -1,0 +1,12 @@
+""" shopping cart with kwargs"""
+class shoppingQart:
+    def __init__(self):
+        self.items={}
+
+    def addItem(self,**kwargs):
+        for item,price in kwargs.items():
+            self .items[item]=price
+
+
+
+
