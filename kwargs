@@ -1,12 +1,43 @@
-""" shopping cart with kwargs"""
-class shoppingQart:
+""" shopping cart with kwargs """
+class ShoppingCart:
     def __init__(self):
-        self.items={}
+        self.items = {}
 
-    def addItem(self,**kwargs):
-        for item,price in kwargs.items():
-            self .items[item]=price
+    def add_items(self, **kwargs):
+        for item, price in kwargs.items():
+            self.items[item] = price
+
+    def show_cart(self):
+        print("\n Shopping Cart:")
+        for item, price in self.items.items():
+            print(f"- {item}: Rs.{price}")
+        print("\nTotal: Rs.", self.total_price())
+
+    def total_price(self):
+        return sum(self.items.values())
+
+
+# --------- Example Usage ---------
+cart = ShoppingCart()
+
+cart.add_items(salt=300, sugar=400, flour=500)
+
+cart.add_items(Bread=300, Cake=400, Pizza=500)
+
+cart.show_cart()
+
+"""
+---------------------------------OUTPUT--------------------------------------------
+ Shopping Cart:
+- salt: Rs.300
+- sugar: Rs.400
+- flour: Rs.500
+- Bread: Rs.300
+- Cake: Rs.400
+- Pizza: Rs.500
+
+Total: Rs. 2400
 
 
 
-
+"""
