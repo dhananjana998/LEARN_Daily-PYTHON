@@ -7,6 +7,8 @@ except ValueError:
     print("You didn't enter a number")
 except Exception as e:
     print(e)
+finally:
+    print("Thank you for using the program.")
 
 """ output :-
 
@@ -22,3 +24,4 @@ Exception--------
 Enter number:#not entering value enter ,enter button
 You didn't enter a number
 """
+
